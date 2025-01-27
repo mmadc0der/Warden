@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
+#include <iomanip>
 
 namespace warden {
 namespace cli {
@@ -15,33 +16,70 @@ void CLI::run() {
     std::cout << "Welcome to Warden Password Manager. Type 'help' for commands.\n";
 
     while (running_) {
-        std::cout << "warden> ";
+        std::cout << "warden> " << std::flush;
         std::string line;
-        if (!std::getline(std::cin, line)) {
-            break;
-        }
-        if (!line.empty()) {
-            processCommand(line);
+        
+        if (std::getline(std::cin, line)) {
+            std::cout << "Debug: Read line, length=" << line.length() << "\n";
+            std::cout << "Debug: Raw input bytes: ";
+            for (unsigned char c : line) {
+                std::cout << std::hex << std::setw(2) << std::setfill('0') 
+                         << static_cast<int>(c) << " ";
+            }
+            std::cout << std::dec << "\n";
+            
+            // Удаляем пробелы в начале и конце строки
+            line.erase(0, line.find_first_not_of(" \t\n\r\f\v"));
+            line.erase(line.find_last_not_of(" \t\n\r\f\v") + 1);
+            
+            std::cout << "Debug: After trim, length=" << line.length() << "\n";
+            
+            if (!line.empty()) {
+                std::cout << "Debug: Processing command: '" << line << "'\n";
+                processCommand(line);
+            } else {
+                std::cout << "Debug: Line is empty after trimming\n";
+            }
+        } else {
+            if (std::cin.eof()) {
+                std::cout << "Debug: End of input reached\n";
+                break;
+            }
+            if (std::cin.fail()) {
+                std::cout << "Debug: Input stream failed\n";
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            }
         }
     }
 }
 
 std::vector<std::string> CLI::splitCommand(const std::string& line) {
     std::vector<std::string> args;
+    std::string token;
     std::istringstream iss(line);
-    std::string arg;
-    while (iss >> arg) {
-        args.push_back(arg);
+    
+    while (iss >> token) {
+        std::cout << "Debug: Found token: '" << token << "'\n";
+        args.push_back(token);
     }
+
+    std::cout << "Debug: Split into " << args.size() << " args. First arg: '" 
+              << (args.empty() ? "empty" : args[0]) << "'\n";
     return args;
 }
 
 void CLI::processCommand(const std::string& line) {
     auto args = splitCommand(line);
-    if (args.empty()) return;
+    if (args.empty()) {
+        std::cout << "Empty command\n";
+        return;
+    }
 
-    const auto& command = args[0];
-    args.erase(args.begin());
+    std::string command = args[0];  // Создаем копию команды
+    args.erase(args.begin());       // Удаляем команду из аргументов
+
+    std::cout << "Debug: Processing command='" << command << "' with " << args.size() << " arguments\n";
 
     if (command == "add") {
         handleAdd(args);
@@ -57,8 +95,9 @@ void CLI::processCommand(const std::string& line) {
         printHelp();
     } else if (command == "exit" || command == "quit") {
         running_ = false;
+        std::cout << "Goodbye!\n";
     } else {
-        std::cout << "Unknown command. Type 'help' for available commands.\n";
+        std::cout << "Unknown command '" << command << "'. Type 'help' for available commands.\n";
     }
 }
 

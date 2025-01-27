@@ -44,7 +44,7 @@ std::filesystem::path Storage::getBlockPath(const std::string& block_id) {
 }
 
 bool Storage::write(const std::string& key, const std::vector<uint8_t>& data) {
-    if (index_.contains(key)) {
+    if (index_.find(key) != index_.end()) {
         return false;
     }
 

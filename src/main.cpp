@@ -2,6 +2,7 @@
 #include "core/manager.hpp"
 #include "core/storage.hpp"
 #include <filesystem>
+#include <iostream>
 #include <memory>
 
 int main() {
