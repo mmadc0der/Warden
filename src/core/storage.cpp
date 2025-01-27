@@ -1,8 +1,7 @@
 #include "core/storage.hpp"
 #include <nlohmann/json.hpp>
 #include <fstream>
-#include <sstream>
-#include <iomanip>
+#include <algorithm>
 
 namespace warden {
 namespace core {
@@ -48,7 +47,6 @@ bool Storage::write(const std::string& key, const std::vector<uint8_t>& data) {
         return false;
     }
 
-    // Создаем ID блока из текущего количества блоков
     std::string block_id = std::to_string(index_.size());
     auto block_path = getBlockPath(block_id);
 
